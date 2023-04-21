@@ -1,5 +1,8 @@
 # SQLiteStorage
 
+> ⚠ The code is not ready yet for use!
+> You can contribute.
+
 Simple aiogram FSM storage, stores all data in SQLite database
 
 Intended to replace MemoryStorage for simple cases where you want to keep states between bot restarts.
