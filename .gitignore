@@ -3,3 +3,5 @@
 /tests/.pytest_cache/
 config.py
 /fsm_storage.db
+poetry.lock
+poetry.lock
