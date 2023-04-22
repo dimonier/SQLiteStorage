@@ -1,4 +1,4 @@
-from sqlitestorage.sqlite import SQLiteStorage
+from sqlitestorage.storage import SQLiteStorage
 import pytest
 import pytest_asyncio
 from pytest_lazyfixture import lazy_fixture
