@@ -17,9 +17,11 @@ Tests are based on [original aiogram tests](https://github.com/aiogram/aiogram/b
 
 ## Installation
 
-Copy `sqlitestorage` folder to your project and include the folloging in your script:
+Copy `sqlitestorage` folder to your project.
 
 ## Usage
+
+Include the following in your script:
 
 ```python
 # import aiogram and the rest
