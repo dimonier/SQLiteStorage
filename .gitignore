@@ -4,4 +4,4 @@
 config.py
 /fsm_storage.db
 poetry.lock
-poetry.lock
+__pycache__/*
