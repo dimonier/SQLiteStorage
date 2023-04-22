@@ -1,0 +1,5 @@
+.venv
+.gitignore
+/tests/.pytest_cache/
+config.py
+/fsm_storage.db
