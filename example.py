@@ -1,26 +1,24 @@
 from aiogram.dispatcher.storage import FSMContext
-from aiogram import types
+from aiogram import types, Dispatcher, Bot
 
-from sqlitestorage.sqlite import SQLiteStorage
+from sqlitestorage.storage import SQLiteStorage
+
+from config import API_TOKEN
+
+bot = Bot(token=API_TOKEN)
+storage = SQLiteStorage()
+dp = Dispatcher(bot, storage=storage)
+
 
 # Usage example
-async def on_start(message: types.Message):
-    fsm_storage = SQLiteStorage()
-    fsm_context = FSMContext(dp, fsm_storage)
-
+async def on_start(message: types.Message, state: FSMContext):
     # Set state
-    await fsm_context.set_state("test_state")
+    await state.set_state("test_state")
     # Set data
-    await fsm_context.set_data({"key": "value"})
+    await state.set_data({"key": "value"})
     # Get state
-    state = await fsm_context.get_state()
+    state = await state.get_state()
     # Get data
-    data = await fsm_context.get_data()
-    print(state, data)
-
-    # Reset data
-    await fsm_context.reset_data()
-    # Finish the state
-    await fsm_context.finish()
+    print(state)
 
     await message.answer("Done!")
