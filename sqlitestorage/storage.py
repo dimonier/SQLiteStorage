@@ -13,9 +13,24 @@ class SQLiteStorage(BaseStorage):
     between bot restarts.
     """
 
-    async def update_data(self, *, chat: typing.Union[str, int, None] = None, user: typing.Union[str, int, None] = None,
-                          data: typing.Dict = None, **kwargs):
-        pass
+    async def update_data(self,
+                          *,
+                          chat: typing.Union[str, int, None] = None,
+                          user: typing.Union[str, int, None] = None,
+                          data: typing.Dict = None,
+                          **kwargs):
+        existing_data = await self.get_data(chat=chat, user=user)
+        if data:
+            existing_data.update(data)
+        existing_data.update(**kwargs)
+
+        conn = self._get_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT OR REPLACE INTO fsm_data (key, state, data)
+            VALUES (?, COALESCE((SELECT state FROM fsm_data WHERE key = ?), '{}'), ?)
+        """, (str(chat) + str(user), str(chat) + str(user), json.dumps(existing_data)))
+        conn.commit()
 
     async def update_bucket(self, *, chat: typing.Union[str, int, None] = None,
                             user: typing.Union[str, int, None] = None, bucket: typing.Dict = None, **kwargs):
@@ -63,13 +78,15 @@ class SQLiteStorage(BaseStorage):
     async def set_state(self, *,
                         chat: typing.Union[str, int, None] = None,
                         user: typing.Union[str, int, None] = None,
-                        state: typing.Optional[typing.AnyStr] = None):
+                        state: typing.Optional[typing.AnyStr] = None,
+                        **kwargs):
         conn = self._get_connection()
         cursor = conn.cursor()
         cursor.execute("""
-            INSERT OR REPLACE INTO fsm_data (key, state, data)
+            INSERT OR REPLACE INTO fsm_data
+            (key, state, data)
             VALUES (?, ?, COALESCE((SELECT data FROM fsm_data WHERE key = ?), '{}'))
-        """, (str(chat), state, str(state)))
+        """, (str(chat) + str(user), state, str(chat) + str(user)))
         conn.commit()
 
     async def get_state(self,
@@ -79,7 +96,7 @@ class SQLiteStorage(BaseStorage):
                         default: str | None = None) -> typing.Coroutine[Any, Any, str | None]:
         conn = self._get_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT state FROM fsm_data WHERE key = ?", (str(chat),))
+        cursor.execute("SELECT state FROM fsm_data WHERE key = ?", (str(chat) + str(user),))
         result = cursor.fetchone()
         return result[0] if result else None
 
@@ -90,9 +107,9 @@ class SQLiteStorage(BaseStorage):
         conn = self._get_connection()
         cursor = conn.cursor()
         cursor.execute("""
-            INSERT OR REPLACE INTO fsm_data (key, state, data)
-            VALUES (?, COALESCE((SELECT state FROM fsm_data WHERE key = ?), ''), ?)
-        """, (str(chat), str(chat), json.dumps(data)))
+            INSERT OR REPLACE data = ? INTO fsm_data
+            WHERE key = ?
+        """, (json.dumps(data), str(chat) + str(user)))
         conn.commit()
 
     async def get_data(self, *,
@@ -101,11 +118,11 @@ class SQLiteStorage(BaseStorage):
                        default: typing.Optional[typing.Dict] = None) -> typing.Dict:
         conn = self._get_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT data FROM fsm_data WHERE key = ?", (str(chat),))
+        cursor.execute("SELECT data FROM fsm_data WHERE key = ?", (str(chat) + str(user),))
         result = cursor.fetchone()
         return json.loads(result[0]) if result else {}
 
     async def reset_data(self, *,
                          chat: typing.Union[str, int, None] = None,
                          user: typing.Union[str, int, None] = None):
-        await self.set_data(chat=chat, data={})
+        await self.set_data(chat=chat, user=user, data={})
