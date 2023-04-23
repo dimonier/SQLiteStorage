@@ -105,8 +105,6 @@ class SQLiteStorage(BaseStorage):
                        data: typing.Dict = None):
         conn = self._get_connection()
         cursor = conn.cursor()
-        print(f'data: {json.dumps(data)}')
-        print(f'key: {str(chat) + ":" + str(user)}')
         cursor.execute("""
             INSERT OR REPLACE INTO fsm_data (data, key)
             VALUES (?, ?)
@@ -121,9 +119,6 @@ class SQLiteStorage(BaseStorage):
         cursor = conn.cursor()
         cursor.execute("SELECT data FROM fsm_data WHERE key = ?", (str(chat) + ":" + str(user),))
         result = cursor.fetchone()
-        data = result[0] if result else {}
-        print(f'data: {data}')
-        print(f'key: {str(chat) + ":" + str(user)}')
         return json.loads(result[0]) if result else {}
 
     async def reset_data(self, *,
