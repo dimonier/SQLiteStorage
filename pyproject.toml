@@ -9,9 +9,9 @@ readme = "README.md"
 python = "^3.11"
 aiogram = "^2.25.1"
 pytest = "^7.3.1"
-pytest-asyncio = "^0.21.0"
-pytest-lazy-fixture = "^0.6.3"
 mypy = "^1.2.0"
+bson = "^0.5.10"
+alt-pytest-asyncio = "^0.7.0"
 
 
 [build-system]
