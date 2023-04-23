@@ -107,9 +107,9 @@ class SQLiteStorage(BaseStorage):
         conn = self._get_connection()
         cursor = conn.cursor()
         cursor.execute("""
-            INSERT OR REPLACE data = ? INTO fsm_data
-            WHERE key = ?
-        """, (json.dumps(data), str(chat) + str(user)))
+            INSERT OR REPLACE INTO fsm_data (key, state, data)
+            VALUES (?, COALESCE((SELECT state FROM fsm_data WHERE key = ?), ''), ?)        
+        """, (str(chat) + str(user), str(chat) + str(user), json.dumps(data)))
         conn.commit()
 
     async def get_data(self, *,
