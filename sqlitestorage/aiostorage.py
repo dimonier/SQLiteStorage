@@ -1,11 +1,12 @@
-import sqlite3
+import asyncio
+import aiosqlite
 from aiogram.dispatcher.storage import BaseStorage
 from typing import Any, Dict, Optional, Tuple
 import json
 import typing
 
 
-class SQLiteStorage(BaseStorage):
+class AIOSQLiteStorage(BaseStorage):
     """
     Simple SQLite based storage for Finite State Machine.
 
@@ -13,83 +14,65 @@ class SQLiteStorage(BaseStorage):
     between bot restarts.
     """
 
-    def __init__(self, db_path: str = "fsm_storage.db"):
+    def __init__(self, db_path: str):
         self.db_path = db_path
-        self._conn = None
-        self._init_db()
 
-    def _init_db(self):
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS fsm_data (
-                key TEXT PRIMARY KEY,
-                state TEXT,
-                data TEXT
-            )
-        """)
-        conn.commit()
-        conn.close()
-
-    def _get_connection(self) :
-        if self._conn is None:
-            self._conn = sqlite3.connect(self.db_path, check_same_thread=False)
-        return self._conn
-
-    async def close(self) -> None:
-        if self._conn is not None:
-            self._conn.close()
-            self._conn = None
-
-    async def wait_closed(self) -> None:
-        pass
+    @classmethod
+    async def create(cls, db_path: str = "fsm_storage.db"):
+        self = AIOSQLiteStorage(db_path)
+        async with aiosqlite.connect(db_path) as db:
+            await db.execute("""
+                CREATE TABLE IF NOT EXISTS fsm_data (
+                    key TEXT PRIMARY KEY,
+                    state TEXT,
+                    data TEXT
+                )
+            """)
+            await db.commit()
+        return self
 
     async def set_state(self, *,
                         chat: typing.Union[str, int, None] = None,
                         user: typing.Union[str, int, None] = None,
                         state: typing.Optional[typing.AnyStr] = None,
                         **kwargs):
-        conn = self._get_connection()
-        cursor = conn.cursor()
-        cursor.execute("""
-            INSERT OR REPLACE INTO fsm_data
-            (key, state, data)
-            VALUES (?, ?, COALESCE((SELECT data FROM fsm_data WHERE key = ?), '{}'))
-        """, (str(chat) + ":" + str(user), state, str(chat) + ":" + str(user)))
-        conn.commit()
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute("""
+                INSERT OR REPLACE INTO fsm_data
+                (key, state, data)
+                VALUES (?, ?, COALESCE((SELECT data FROM fsm_data WHERE key = ?), '{}'))
+            """, (str(chat) + ":" + str(user), state, str(chat) + ":" + str(user)))
+            await db.commit()
 
     async def get_state(self,
                         *,
                         chat: str | int | None = None,
                         user: str | int | None = None,
                         default: str | None = None) -> typing.Coroutine[Any, Any, str | None]:
-        conn = self._get_connection()
-        cursor = conn.cursor()
-        cursor.execute("SELECT state FROM fsm_data WHERE key = ?", (str(chat) + ":" + str(user),))
-        result = cursor.fetchone()
-        return result[0] if result else None
+        async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute("SELECT state FROM fsm_data WHERE key = ?", (str(chat) + ":" + str(user),))
+            result = await cursor.fetchone()
+            return result[0] if result else None
 
     async def set_data(self, *,
                        chat: typing.Union[str, int, None] = None,
                        user: typing.Union[str, int, None] = None,
                        data: typing.Dict | None = None):
-        conn = self._get_connection()
-        cursor = conn.cursor()
-        cursor.execute("""
-            INSERT OR REPLACE INTO fsm_data (key, state, data)
-            VALUES (?, COALESCE((SELECT state FROM fsm_data WHERE key = ?), ''), ?)
-        """, (str(chat) + ":" + str(user), str(chat) + ":" + str(user), json.dumps(data)))
-        conn.commit()
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute("""
+                INSERT OR REPLACE INTO fsm_data (key, state, data)
+                VALUES (?, COALESCE((SELECT state FROM fsm_data WHERE key = ?), ''), ?)
+            """, (str(chat) + ":" + str(user), str(chat) + ":" + str(user), json.dumps(data)))
+            await db.commit()
 
     async def get_data(self, *,
                        chat: typing.Union[str, int, None] = None,
                        user: typing.Union[str, int, None] = None,
                        default: typing.Optional[typing.Dict] = None) -> typing.Dict:
-        conn = self._get_connection()
-        cursor = conn.cursor()
-        cursor.execute("SELECT data FROM fsm_data WHERE key = ?", (str(chat) + ":" + str(user),))
-        result = cursor.fetchone()
-        return json.loads(result[0]) if result else {}
+        async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute("SELECT data FROM fsm_data WHERE key = ?", (str(chat) + ":" + str(user),))
+            result = await cursor.fetchone()
+            return json.loads(result[0]) if result else {}
 
     async def reset_data(self, *,
                          chat: typing.Union[str, int, None] = None,
@@ -107,13 +90,12 @@ class SQLiteStorage(BaseStorage):
             existing_data.update(data)
         existing_data.update(**kwargs)
 
-        conn = self._get_connection()
-        cursor = conn.cursor()
-        cursor.execute("""
-            INSERT OR REPLACE INTO fsm_data (key, state, data)
-            VALUES (?, COALESCE((SELECT state FROM fsm_data WHERE key = ?), '{}'), ?)
-        """, (str(chat) + ":" + str(user), str(chat) + ":" + str(user), json.dumps(existing_data)))
-        conn.commit()
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute("""
+                INSERT OR REPLACE INTO fsm_data (key, state, data)
+                VALUES (?, COALESCE((SELECT state FROM fsm_data WHERE key = ?), '{}'), ?)
+            """, (str(chat) + ":" + str(user), str(chat) + ":" + str(user), json.dumps(existing_data)))
+            await db.commit()
 
     async def update_bucket(self,
                             *,
