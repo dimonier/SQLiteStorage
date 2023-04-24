@@ -27,4 +27,5 @@ async def aiostorage() -> AsyncGenerator[SQLiteStorage, None]:
     try:
         yield database
     finally:
+        await database.close()
         os.remove(db_filename)
