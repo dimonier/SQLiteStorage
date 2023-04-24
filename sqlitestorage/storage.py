@@ -95,7 +95,7 @@ class SQLiteStorage(BaseStorage):
             INSERT OR REPLACE INTO fsm_data
             (key, state, data)
             VALUES (?, ?, COALESCE((SELECT data FROM fsm_data WHERE key = ?), '{}'))
-        """, (str(chat) + ":" + str(user), state, str(chat) + ":" + str(user)))
+        """, (str(chat) + ":" + str(user), self.resolve_state(state), str(chat) + ":" + str(user)))
         conn.commit()
 
     async def get_state(self,
