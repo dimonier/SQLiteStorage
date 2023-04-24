@@ -9,11 +9,30 @@ readme = "README.md"
 python = "^3.11"
 aiogram = "^2.25.1"
 pytest = "^7.3.1"
-pytest-asyncio = "^0.21.0"
-pytest-lazy-fixture = "^0.6.3"
 mypy = "^1.2.0"
+bson = "^0.5.10"
+alt-pytest-asyncio = "^0.7.0"
 
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+
+[tool.mypy]
+show_error_codes = true
+disallow_any_generics = true
+disallow_subclassing_any = true
+disallow_untyped_calls = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_return_any = true
+implicit_reexport = false
+strict_equality = true
+namespace_packages = true
+explicit_package_bases = true

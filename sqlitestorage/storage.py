@@ -16,8 +16,8 @@ class SQLiteStorage(BaseStorage):
                           *,
                           chat: typing.Union[str, int, None] = None,
                           user: typing.Union[str, int, None] = None,
-                          data: typing.Dict = None,
-                          **kwargs):
+                          data: typing.Dict[Any, Any] | None = None,
+                          **kwargs: Any) -> None:
         existing_data = await self.get_data(chat=chat, user=user)
         if data:
             existing_data.update(data)
@@ -31,16 +31,26 @@ class SQLiteStorage(BaseStorage):
         """, (str(chat) + ":" + str(user), str(chat) + ":" + str(user), json.dumps(existing_data)))
         conn.commit()
 
-    async def update_bucket(self, *, chat: typing.Union[str, int, None] = None,
-                            user: typing.Union[str, int, None] = None, bucket: typing.Dict = None, **kwargs):
+    async def update_bucket(self,
+                            *,
+                            chat: typing.Union[str, int, None] = None,
+                            user: typing.Union[str, int, None] = None,
+                            bucket: typing.Dict | None = None,
+                            **kwargs):
         pass
 
-    async def set_bucket(self, *, chat: typing.Union[str, int, None] = None, user: typing.Union[str, int, None] = None,
-                         bucket: typing.Dict = None):
+    async def set_bucket(self,
+                         *,
+                         chat: typing.Union[str, int, None] = None,
+                         user: typing.Union[str, int, None] = None,
+                         bucket: typing.Dict | None = None) -> None:
         pass
 
-    async def get_bucket(self, *, chat: typing.Union[str, int, None] = None, user: typing.Union[str, int, None] = None,
-                         default: typing.Optional[dict] = None) -> typing.Dict:
+    async def get_bucket(self,
+                         *,
+                         chat: typing.Union[str, int, None] = None,
+                         user: typing.Union[str, int, None] = None,
+                         default: typing.Optional[dict] | None = None) -> dict | None:
         pass
 
     def __init__(self, db_path: str = "fsm_storage.db"):
@@ -61,7 +71,7 @@ class SQLiteStorage(BaseStorage):
         conn.commit()
         conn.close()
 
-    def _get_connection(self):
+    def _get_connection(self) :
         if self._conn is None:
             self._conn = sqlite3.connect(self.db_path)
         return self._conn
@@ -102,7 +112,7 @@ class SQLiteStorage(BaseStorage):
     async def set_data(self, *,
                        chat: typing.Union[str, int, None] = None,
                        user: typing.Union[str, int, None] = None,
-                       data: typing.Dict = None):
+                       data: typing.Dict | None = None):
         conn = self._get_connection()
         cursor = conn.cursor()
         cursor.execute("""
