@@ -4,7 +4,6 @@ from typing import Any, Dict, Optional, Tuple
 import json
 import typing
 
-
 class SQLiteStorage(BaseStorage):
     """
     Simple SQLite based storage for Finite State Machine.
@@ -29,7 +28,7 @@ class SQLiteStorage(BaseStorage):
         cursor.execute("""
             INSERT OR REPLACE INTO fsm_data (key, state, data)
             VALUES (?, COALESCE((SELECT state FROM fsm_data WHERE key = ?), '{}'), ?)
-        """, (str(chat) + str(user), str(chat) + str(user), json.dumps(existing_data)))
+        """, (str(chat) + ":" + str(user), str(chat) + ":" + str(user), json.dumps(existing_data)))
         conn.commit()
 
     async def update_bucket(self,
@@ -96,7 +95,7 @@ class SQLiteStorage(BaseStorage):
             INSERT OR REPLACE INTO fsm_data
             (key, state, data)
             VALUES (?, ?, COALESCE((SELECT data FROM fsm_data WHERE key = ?), '{}'))
-        """, (str(chat) + str(user), state, str(chat) + str(user)))
+        """, (str(chat) + ":" + str(user), state, str(chat) + ":" + str(user)))
         conn.commit()
 
     async def get_state(self,
@@ -106,7 +105,7 @@ class SQLiteStorage(BaseStorage):
                         default: str | None = None) -> typing.Coroutine[Any, Any, str | None]:
         conn = self._get_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT state FROM fsm_data WHERE key = ?", (str(chat) + str(user),))
+        cursor.execute("SELECT state FROM fsm_data WHERE key = ?", (str(chat) + ":" + str(user),))
         result = cursor.fetchone()
         return result[0] if result else None
 
@@ -118,8 +117,8 @@ class SQLiteStorage(BaseStorage):
         cursor = conn.cursor()
         cursor.execute("""
             INSERT OR REPLACE INTO fsm_data (key, state, data)
-            VALUES (?, COALESCE((SELECT state FROM fsm_data WHERE key = ?), ''), ?)        
-        """, (str(chat) + str(user), str(chat) + str(user), json.dumps(data)))
+            VALUES (?, COALESCE((SELECT state FROM fsm_data WHERE key = ?), ''), ?)
+        """, (str(chat) + ":" + str(user), str(chat) + ":" + str(user), json.dumps(data)))
         conn.commit()
 
     async def get_data(self, *,
@@ -128,7 +127,7 @@ class SQLiteStorage(BaseStorage):
                        default: typing.Optional[typing.Dict] = None) -> typing.Dict:
         conn = self._get_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT data FROM fsm_data WHERE key = ?", (str(chat) + str(user),))
+        cursor.execute("SELECT data FROM fsm_data WHERE key = ?", (str(chat) + ":" + str(user),))
         result = cursor.fetchone()
         return json.loads(result[0]) if result else {}
 
