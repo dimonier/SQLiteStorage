@@ -91,6 +91,10 @@ class SQLiteStorage(BaseStorage):
                         **kwargs):
         conn = self._get_connection()
         cursor = conn.cursor()
+        # print('Set state')
+        # print(f'chat: {chat}')
+        # print(f'user: {user}')
+        # print(f'state: {self.resolve_state(state)}')
         cursor.execute("""
             INSERT OR REPLACE INTO fsm_data
             (key, state, data)
@@ -107,7 +111,22 @@ class SQLiteStorage(BaseStorage):
         cursor = conn.cursor()
         cursor.execute("SELECT state FROM fsm_data WHERE key = ?", (str(chat) + ":" + str(user),))
         result = cursor.fetchone()
-        return result[0] if result else None
+        if result and len(result[0]) > 0:
+            state = result[0]
+        else:
+            state = None
+        # if result:
+        #     what = result
+        # else:
+        #     what = None
+        # print('Get state')
+        # print(f'chat: {chat}')
+        # print(f'user: {user}')
+        # print(f'raw state: {result[0]}')
+        # print(f'resolved state: {self.resolve_state(result[0])}')
+        # print(f'result: {what}')
+        # print(f'state: {state}')
+        return state
 
     async def set_data(self, *,
                        chat: typing.Union[str, int, None] = None,
@@ -135,3 +154,20 @@ class SQLiteStorage(BaseStorage):
                          chat: typing.Union[str, int, None] = None,
                          user: typing.Union[str, int, None] = None):
         await self.set_data(chat=chat, user=user, data={})
+
+    async def reset_state(self, *,
+                          chat: typing.Union[str, int, None] = None,
+                          user: typing.Union[str, int, None] = None,
+                          with_data: typing.Optional[bool] = True):
+#        await self.set_state(chat=chat, user=user, state=None)
+#        if with_data:
+#            await self.set_data(chat=chat, user=user, data={})
+        self._cleanup(chat, user)
+
+    def _cleanup(self, chat, user):
+        chat, user = self.resolve_address(chat=chat, user=user)
+        if self.get_state(chat=chat, user=user) == None:
+            conn = self._get_connection()
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM fsm_data WHERE key = ?", (str(chat) + ":" + str(user),))
+            conn.commit()
