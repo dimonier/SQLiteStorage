@@ -111,19 +111,19 @@ class SQLiteStorage(BaseStorage):
         cursor = conn.cursor()
         cursor.execute("SELECT state FROM fsm_data WHERE key = ?", (str(chat) + ":" + str(user),))
         result = cursor.fetchone()
-        if result and len(result[0]) > 0:
-            state = result[0]
-        else:
-            state = None
-        # if result:
-        #     what = result
-        # else:
-        #     what = None
         # print('Get state')
         # print(f'chat: {chat}')
         # print(f'user: {user}')
         # print(f'raw state: {result[0]}')
         # print(f'resolved state: {self.resolve_state(result[0])}')
+        if result:
+            what = result
+        else:
+            what = None
+        if result and len(result[0]) > 0:
+            state = result[0]
+        else:
+            state = None
         # print(f'result: {what}')
         # print(f'state: {state}')
         return state
@@ -165,7 +165,7 @@ class SQLiteStorage(BaseStorage):
         self._cleanup(chat, user)
 
     def _cleanup(self, chat, user):
-        chat, user = self.resolve_address(chat=chat, user=user)
+#        chat, user = self.resolve_address(chat=chat, user=user)
         if self.get_state(chat=chat, user=user) == None:
             conn = self._get_connection()
             cursor = conn.cursor()
