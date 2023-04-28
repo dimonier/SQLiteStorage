@@ -166,8 +166,8 @@ class SQLiteStorage(BaseStorage):
 
     def _cleanup(self, chat, user):
 #        chat, user = self.resolve_address(chat=chat, user=user)
-        if self.get_state(chat=chat, user=user) == None:
-            conn = self._get_connection()
-            cursor = conn.cursor()
-            cursor.execute("DELETE FROM fsm_data WHERE key = ?", (str(chat) + ":" + str(user),))
-            conn.commit()
+#        if self.get_state(chat=chat, user=user) == None:
+        conn = self._get_connection()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM fsm_data WHERE key = ?", (str(chat) + ":" + str(user),))
+        conn.commit()
