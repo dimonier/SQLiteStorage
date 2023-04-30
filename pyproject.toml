@@ -36,3 +36,10 @@ implicit_reexport = false
 strict_equality = true
 namespace_packages = true
 explicit_package_bases = true
+exclude = [
+    'example.py'
+]
+
+[[tool.mypy.overrides]]
+module = ["bson.*", "aiogram.*"]
+ignore_missing_imports = true
